@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>사다리타기</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Pretendard", "Noto Sans KR", sans-serif;
+      background: linear-gradient(180deg, #bdeee8 0%, #c8f4ef 100%);
+      color: #444;
+    }
+
+    .wrap { max-width: 900px; margin: 0 auto; padding: 28px 20px 40px; }
+    .title-area { text-align: center; margin-bottom: 24px; }
+
+    .badge { display:inline-block; padding:8px 18px; border-radius:999px; background:#ff9fba; color:#fff; font-size:13px; font-weight:700; margin-bottom:14px; }
+    h1 { margin:0; font-size:56px; color:#ff96b3; }
+    .sub { margin-top:10px; color:#5e7f7b; }
+
+    .game-card { background:#fff; border:6px solid #ffabc1; border-radius:28px; padding:22px; }
+
+    .input-row {
+      display:grid;
+      grid-template-columns: repeat(4,1fr);
+      gap:8px;
+      margin-bottom:10px;
+    }
+
+    input {
+      padding:8px;
+      border-radius:10px;
+      border:1px solid #ddd;
+      text-align:center;
+    }
+
+    .top-row, .bottom-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+
+    .avatar { width:60px; height:60px; margin:0 auto 6px; display:flex; align-items:center; justify-content:center; font-size:28px; }
+    .name, .role { background:#ffb5ca; color:white; border-radius:10px; padding:8px; text-align:center; }
+
+    .controls { display:flex; gap:10px; justify-content:center; margin:14px 0; }
+    button { padding:10px 14px; border-radius:999px; border:none; cursor:pointer; }
+    .primary { background:#ff95b2; color:white; }
+    .secondary { background:#95e2d8; color:white; }
+
+    .ladder-wrap { position:relative; height:420px; background:#fff; border-radius:20px; }
+    canvas { width:100%; height:100%; }
+
+    .cover-message {
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      background:rgba(255,255,255,0.9);
+    }
+
+    .result-box { text-align:center; margin-top:10px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="title-area">
+    <h1>사다리타기</h1>
+    <div class="sub">이름과 역할을 직접 수정할 수 있습니다</div>
+  </div>
+
+  <section class="game-card">
+
+    <!-- 이름 입력 -->
+    <div class="input-row">
+      <input id="p1" placeholder="이름">
+      <input id="p2" placeholder="이름">
+      <input id="p3" placeholder="이름">
+      <input id="p4" placeholder="이름">
+    </div>
+
+    <!-- 역할 입력 -->
+    <div class="input-row">
+      <input id="r1" placeholder="역할">
+      <input id="r2" placeholder="역할">
+      <input id="r3" placeholder="역할">
+      <input id="r4" placeholder="역할">
+    </div>
+
+    <div class="top-row" id="playersRow"></div>
+
+    <div class="controls">
+      <button class="secondary" id="shuffleBtn">역할 섞기</button>
+      <button class="primary" id="revealBtn">결과 보기</button>
+    </div>
+
+    <div class="ladder-wrap">
+      <canvas id="ladderCanvas" width="760" height="420"></canvas>
+      <div class="cover-message" id="coverMessage">결과 보기 누르기</div>
+    </div>
+
+    <div class="bottom-row" id="rolesRow"></div>
+
+    <div class="result-box" id="resultBox">준비 완료</div>
+
+  </section>
+</div>
+
+<script>
+let players = [];
+let roles = [];
+
+const canvas = document.getElementById('ladderCanvas');
+const ctx = canvas.getContext('2d');
+
+function loadInputs(){
+  players = [
+    {name: p1.value, emoji:'😀'},
+    {name: p2.value, emoji:'😎'},
+    {name: p3.value, emoji:'🤖'},
+    {name: p4.value, emoji:'🐼'}
+  ];
+
+  roles = [r1.value, r2.value, r3.value, r4.value];
+}
+
+function shuffle(arr){
+  return arr.sort(()=>Math.random()-0.5);
+}
+
+function buildRows(finalRoles){
+  playersRow.innerHTML = players.map(p=>`<div><div class='avatar'>${p.emoji}</div><div class='name'>${p.name}</div></div>`).join('');
+  rolesRow.innerHTML = finalRoles.map(r=>`<div><div class='avatar'>🎁</div><div class='role'>${r}</div></div>`).join('');
+}
+
+let finalRoles = [];
+
+function generate(){
+  loadInputs();
+  finalRoles = shuffle([...roles]);
+  buildRows(finalRoles);
+  drawBase();
+  coverMessage.style.display='flex';
+}
+
+const COLS = 4;
+const xs = [120, 300, 480, 660];
+
+function drawBase(){
+  ctx.clearRect(0,0,760,420);
+  ctx.strokeStyle='#99e4da';
+  ctx.lineWidth=8;
+
+  xs.forEach(x=>{
+    ctx.beginPath();
+    ctx.moveTo(x,20);
+    ctx.lineTo(x,400);
+    ctx.stroke();
+  });
+}
+
+async function reveal(){
+  coverMessage.style.display='none';
+
+  for(let i=0;i<4;i++){
+    resultBox.innerText = players[i].name + ' → ' + finalRoles[i];
+    await new Promise(r=>setTimeout(r,800));
+  }
+}
+
+shuffleBtn.onclick=generate;
+revealBtn.onclick=reveal;
+
+generate();
+</script>
+</body>
+</html>
